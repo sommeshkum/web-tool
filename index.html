@@ -1,0 +1,257 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Art & SEO Tools Suite</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-lg p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-2xl text-blue-500"></i>
+                <h1 class="text-2xl font-bold">AI Art & SEO Suite</h1>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow p-4">
+            <div class="max-w-6xl mx-auto">
+                <!-- Tab Navigation -->
+                <div class="flex space-x-4 mb-6 overflow-x-auto">
+                    <button class="tab-btn active px-4 py-2 rounded-lg bg-blue-500 text-white" data-tab="image-generator">Image Generator</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="meta-generator">Meta Generator</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="favicon-generator">Favicon Generator</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="logo-generator">Logo Generator</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="color-checker">Color Checker</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="backlinks-checker">Backlinks Checker</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="og-checker">Open Graph Checker</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="sitemap-generator">Sitemap Generator</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="word-to-pdf">Word to PDF</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="thumbnail-generator">Thumbnail Generator</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="title-creator">Title Creator</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="plagiarism-checker">Plagiarism Checker</button>
+                    <button class="tab-btn px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700" data-tab="grammar-checker">Grammar Checker</button>
+                </div>
+
+                <!-- Image Generator Tab -->
+                <div id="image-generator" class="tab-content">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Text-to-Image Generator</h2>
+                        <form id="image-form" class="space-y-4">
+                            <textarea id="prompt-input" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500" placeholder="Describe the image you want..." spellcheck="false" required></textarea>
+                            <div class="flex space-x-4">
+                                <select id="style-select" class="p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="" disabled selected>Select Style</option>
+                                    <option value="realistic">Realistic</option>
+                                    <option value="3d">3D</option>
+                                    <option value="anime">Anime</option>
+                                    <option value="digital-art">Digital Art</option>
+                                </select>
+                                <button type="button" id="surprise-btn" class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition"><i class="fa-solid fa-dice"></i> Surprise Me</button>
+                                <button type="submit" id="generate-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition">Generate</button>
+                            </div>
+                        </form>
+                        <div id="image-gallery" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6"></div>
+                        <div id="history" class="mt-6">
+                            <h3 class="text-lg font-semibold">History</h3>
+                            <div id="history-gallery" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meta Generator Tab -->
+                <div id="meta-generator" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Meta Keywords & Description Generator</h2>
+                        <textarea id="meta-input" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your website content or description..." required></textarea>
+                        <button id="generate-meta-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition mt-4">Generate Meta Tags</button>
+                        <div id="meta-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Favicon Generator Tab -->
+                <div id="favicon-generator" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Favicon & Manifest Generator</h2>
+                        <input type="file" id="favicon-upload" accept="image/*" class="mb-4">
+                        <button id="generate-favicon-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition">Generate Favicon & Manifest</button>
+                        <div id="favicon-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Logo Generator Tab -->
+                <div id="logo-generator" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Logo Generator</h2>
+                        <input id="logo-text" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Enter logo text...">
+                        <button id="generate-logo-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition">Generate Logo</button>
+                        <div id="logo-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Color Checker Tab -->
+                <div id="color-checker" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Background & Foreground Color Checker</h2>
+                        <input id="bg-color" type="color" class="mr-4">
+                        <input id="fg-color" type="color">
+                        <button id="check-color-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition mt-4">Check Colors</button>
+                        <div id="color-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Backlinks Checker Tab -->
+                <div id="backlinks-checker" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Backlinks Checker</h2>
+                        <input id="backlinks-url" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500" placeholder="Enter website URL...">
+                        <button id="check-backlinks-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition mt-4">Check Backlinks</button>
+                        <div id="backlinks-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Open Graph Checker Tab -->
+                <div id="og-checker" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Open Graph Checker & Creator</h2>
+                        <input id="og-url" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500" placeholder="Enter website URL or create OG tags...">
+                        <button id="check-og-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition mt-4">Check/Create OG Tags</button>
+                        <div id="og-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Sitemap Generator Tab -->
+                <div id="sitemap-generator" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Sitemap Generator</h2>
+                        <input id="sitemap-url" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500" placeholder="Enter website URL...">
+                        <button id="generate-sitemap-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition mt-4">Generate Sitemap</button>
+                        <div id="sitemap-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Word to PDF Tab -->
+                <div id="word-to-pdf" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Word to PDF Converter</h2>
+                        <textarea id="word-input" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500" placeholder="Enter text to convert to PDF..."></textarea>
+                        <button id="convert-word-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition mt-4">Convert to PDF</button>
+                        <div id="word-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Thumbnail Generator Tab -->
+                <div id="thumbnail-generator" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Thumbnail Generator</h2>
+                        <input type="file" id="thumbnail-upload" accept="image/*" class="mb-4">
+                        <button id="generate-thumbnail-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition">Generate Thumbnail</button>
+                        <div id="thumbnail-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Title Creator Tab -->
+                <div id="title-creator" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">SEO Title Creator</h2>
+                        <textarea id="title-input" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500" placeholder="Enter content or keywords for title..."></textarea>
+                        <button id="generate-title-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition mt-4">Generate Title</button>
+                        <div id="title-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Plagiarism Checker Tab -->
+                <div id="plagiarism-checker" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Plagiarism Checker</h2>
+                        <textarea id="plagiarism-input" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500" placeholder="Enter text to check for plagiarism..."></textarea>
+                        <button id="check-plagiarism-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition mt-4">Check Plagiarism</button>
+                        <div id="plagiarism-result" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- Grammar Checker Tab -->
+                <div id="grammar-checker" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+                        <h2 class="text-xl font-semibold mb-4">Grammar & Paragraph Checker</h2>
+                        <textarea id="grammar-input" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border-none focus:ring-2 focus:ring-blue-500" placeholder="Enter text to check grammar..."></textarea>
+                        <button id="check-grammar-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition mt-4">Check Grammar</button>
+                        <div id="grammar-result" class="mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white dark:bg-gray-800 p-4 text-center">
+            <p>&copy; 2025 AI Art & SEO Suite. All rights reserved.</p>
+            <div class="flex justify-center space-x-4 mt-2">
+                <a href="#image-generator" class="tab-btn text-blue-500 hover:underline">Image Generator</a>
+                <a href="#meta-generator" class="tab-btn text-blue-500 hover:underline">Meta Generator</a>
+                <a href="#favicon-generator" class="tab-btn text-blue-500 hover:underline">Favicon Generator</a>
+                <a href="#logo-generator" class="tab-btn text-blue-500 hover:underline">Logo Generator</a>
+                <a href="#color-checker" class="tab-btn text-blue-500 hover:underline">Color Checker</a>
+                <a href="#backlinks-checker" class="tab-btn text-blue-500 hover:underline">Backlinks Checker</a>
+                <a href="#og-checker" class="tab-btn text-blue-500 hover:underline">Open Graph Checker</a>
+                <a href="#sitemap-generator" class="tab-btn text-blue-500 hover:underline">Sitemap Generator</a>
+                <a href="#word-to-pdf" class="tab-btn text-blue-500 hover:underline">Word to PDF</a>
+                <a href="#thumbnail-generator" class="tab-btn text-blue-500 hover:underline">Thumbnail Generator</a>
+                <a href="#title-creator" class="tab-btn text-blue-500 hover:underline">Title Creator</a>
+                <a href="#plagiarism-checker" class="tab-btn text-blue-500 hover:underline">Plagiarism Checker</a>
+                <a href="#grammar-checker" class="tab-btn text-blue-500 hover:underline">Grammar Checker</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
